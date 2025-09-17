@@ -16,17 +16,17 @@ KNOWN_ERRORS = {"DivByZero"}
 
 @dataclass
 class ResultValue:
-    ok: bool
-    value: Any = None
-    error: Optional[str] = None
+    is_ok: bool
+    result_value: Any = None
+    error_message: Optional[str] = None
 
     @classmethod
     def ok(cls, value: Any) -> "ResultValue":
-        return cls(ok=True, value=value)
+        return cls(is_ok=True, result_value=value)
 
     @classmethod
     def error(cls, name: str) -> "ResultValue":
-        return cls(ok=False, error=name)
+        return cls(is_ok=False, error_message=name)
 
 
 @dataclass
@@ -62,6 +62,15 @@ class Interpreter:
         self.hardware = engine.hardware
         if "main" not in self.functions:
             raise XGRuntimeError("Program is missing a main function")
+        
+        self.target_device = self._determine_target_device()
+    
+    def _determine_target_device(self) -> torch.device:
+        """Determine the target device based on hardware settings."""
+        if self.hardware.target_gpu and torch.cuda.is_available():
+            return torch.device('cuda')
+        else:
+            return torch.device('cpu')
 
     def run_main(self, external_values: Optional[Dict[str, Any]] = None) -> ExecutionResult:
         metadata: Dict[str, Any] = {
@@ -69,7 +78,16 @@ class Interpreter:
             "num_gpu": self.hardware.num_gpu,
             "sharding_plan": [],
         }
-        context = RuntimeContext(engine=self.engine, external=external_values or {}, metadata=metadata)
+        
+        processed_external = {}
+        if external_values:
+            for key, value in external_values.items():
+                if isinstance(value, torch.Tensor):
+                    processed_external[key] = value.to(self.target_device)
+                else:
+                    processed_external[key] = value
+        
+        context = RuntimeContext(engine=self.engine, external=processed_external, metadata=metadata)
         result = self._call_function("main", [], context)
         return ExecutionResult(value=result, metadata=metadata)
 
@@ -174,6 +192,8 @@ class Interpreter:
             if expr.op == "@":
                 if not isinstance(left, torch.Tensor) or not isinstance(right, torch.Tensor):
                     raise XGRuntimeError("@ operator requires tensors")
+                if left.device != right.device:
+                    raise XGRuntimeError(f"Tensor device mismatch: {left.device} vs {right.device}")
                 return left @ right
             if expr.op == "==":
                 return left == right
@@ -208,10 +228,10 @@ class Interpreter:
         if isinstance(expected, ResultType):
             if not isinstance(value, ResultValue):
                 raise XGRuntimeError("Expected a Result value")
-            if value.ok:
-                inner = self._validate_runtime_type(expected.inner, value.value, dim_bindings)
+            if value.is_ok:
+                inner = self._validate_runtime_type(expected.inner, value.result_value, dim_bindings)
                 return ResultValue.ok(inner)
-            return ResultValue.error(value.error or "UnknownError")
+            return ResultValue.error(value.error_message or "UnknownError")
         if isinstance(expected, TensorType):
             if not isinstance(value, torch.Tensor):
                 raise XGRuntimeError("Expected tensor value")
@@ -252,9 +272,10 @@ class Interpreter:
                 if size != dim.value:
                     raise XGRuntimeError("Tensor dimension mismatch")
             else:
-                bound = dim_bindings.get(dim.value)
+                dim_key = str(dim.value)
+                bound = dim_bindings.get(dim_key)
                 if bound is None:
-                    dim_bindings[dim.value] = size
+                    dim_bindings[dim_key] = size
                 elif bound != size:
                     raise XGRuntimeError("Tensor dimension binding conflict")
 

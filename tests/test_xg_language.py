@@ -126,12 +126,12 @@ def test_safe_division_requires_explicit_handling():
     )
 
     result = compile_and_run(source)
-    assert result.value.ok is True
-    assert pytest.approx(result.value.value) == 2.0
+    assert result.value.is_ok is True
+    assert pytest.approx(result.value.result_value) == 2.0
 
     engine = compile_source(source)
     zero_result = run_engine(engine, external_values={})
-    assert zero_result.value.ok is True
+    assert zero_result.value.is_ok is True
 
     # A follow-up run where denominator is zero should return an error Result
     def zero_main_source(base: str) -> str:
@@ -139,8 +139,8 @@ def test_safe_division_requires_explicit_handling():
 
     engine_zero = compile_source(zero_main_source(source))
     zero_exec = run_engine(engine_zero)
-    assert zero_exec.value.ok is False
-    assert zero_exec.value.error == "DivByZero"
+    assert zero_exec.value.is_ok is False
+    assert zero_exec.value.error_message == "DivByZero"
 
 
 def test_runtime_shape_mismatch_raises():
