@@ -4,6 +4,32 @@
 - Ensures safety, determinism, and peak efficiency.
 - Meant for enterprises to reduce costly mistake of running unoptimized GPU code
 
+## Installation
+
+### Quick Install from GitHub
+```bash
+pip install git+https://github.com/viraatdas/xg.git
+```
+
+### Development Install
+```bash
+git clone https://github.com/viraatdas/xg.git
+cd xg
+pip install -e .
+```
+
+### Verify Installation
+After installation, you should have access to the CLI tools:
+```bash
+xgc --help    # XG Language Compiler
+xgrun --help  # XG Language Runtime
+```
+
+### Requirements
+- Python 3.8 or higher
+- PyTorch 2.0 or higher
+- CUDA (optional, for GPU execution)
+
 
 ## Example syntax
 ### Hardware declarations
