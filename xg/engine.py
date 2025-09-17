@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 
 from . import ast
 from .typechecker import HardwareSettings, TypeChecker
@@ -13,6 +13,7 @@ from .typechecker import HardwareSettings, TypeChecker
 class Engine:
     program: ast.Program
     hardware: HardwareSettings
+    _function_map_cache: Optional[Dict[str, ast.FunctionDef]] = field(default=None, init=False)
 
     def to_dict(self) -> Dict[str, object]:
         return {
@@ -33,11 +34,13 @@ class Engine:
         return cls(program=program, hardware=hardware)
 
     def function_map(self) -> Dict[str, ast.FunctionDef]:
-        functions: Dict[str, ast.FunctionDef] = {}
-        for stmt in self.program.statements:
-            if isinstance(stmt, ast.FunctionDef):
-                functions[stmt.name] = stmt
-        return functions
+        if self._function_map_cache is None:
+            functions: Dict[str, ast.FunctionDef] = {}
+            for stmt in self.program.statements:
+                if isinstance(stmt, ast.FunctionDef):
+                    functions[stmt.name] = stmt
+            self._function_map_cache = functions
+        return self._function_map_cache
 
     def ensure_checked(self) -> None:
         checker = TypeChecker(self.program)

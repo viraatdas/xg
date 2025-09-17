@@ -238,3 +238,25 @@ def test_cluster_matmul_example_executes():
     assert result.metadata["num_gpu"] == 8
     assert ("A", 0) in result.metadata["sharding_plan"]
     assert ("B", 1) in result.metadata["sharding_plan"]
+
+
+def test_function_map_caching():
+    source = textwrap.dedent(
+        """
+        def add(int64 a, int64 b) -> int64 {
+            return a + b
+        }
+
+        def main() -> int64 {
+            return add(1, 2)
+        }
+        """
+    )
+    engine = compile_source(source)
+    
+    map1 = engine.function_map()
+    map2 = engine.function_map()
+    
+    assert map1 is map2
+    assert "add" in map1
+    assert "main" in map1
