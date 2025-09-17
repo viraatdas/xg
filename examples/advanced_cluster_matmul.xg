@@ -1,5 +1,5 @@
 TARGET_GPU = GB200
-NUM_GPU = 8
+NUM_GPU = 16
 
 def simple_matmul(Tensor[float32, M, K] A, Tensor[float32, K, N] B) -> Tensor[float32, M, N] {
     return A @ B
@@ -11,12 +11,16 @@ def sharded_matmul(Tensor[float32, M, K] A, Tensor[float32, K, N] B) -> Tensor[f
     }
 }
 
-def compute_large_matmul(Tensor[float32, M, K] X, Tensor[float32, K, N] Y) -> Tensor[float32, M, N] {
+def multi_stage_computation(Tensor[float32, M, K] X, Tensor[float32, K, N] Y, Tensor[float32, N, P] Z) -> Tensor[float32, M, P] {
     with shard(X, dim=0), shard(Y, dim=1) {
-        return X @ Y
+        intermediate = X @ Y
+    }
+    
+    with shard(intermediate, dim=0), shard(Z, dim=1) {
+        return intermediate @ Z
     }
 }
 
-def main() -> Tensor[float32, M, N] {
+def main() -> Tensor[float32, 4, 4] {
     return sharded_matmul(A, B)
 }
