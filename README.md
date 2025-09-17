@@ -53,6 +53,26 @@ with shard(A, dim=0), shard(B, dim=1):
     C = A @ B
 ```
 
+## Examples
+
+A full program that shards a matrix multiplication across GPUs lives in [`examples/cluster_matmul.xg`](examples/cluster_matmul.xg).
+You can compile and execute it from Python with:
+
+```python
+from pathlib import Path
+
+import torch
+import xg
+
+engine = xg.compile_file(Path("examples/cluster_matmul.xg"))
+a = torch.randn(2, 4, dtype=torch.float32)
+b = torch.randn(4, 2, dtype=torch.float32)
+
+result = xg.run_engine(engine, external_values={"A": a, "B": b})
+print(result.value)
+print(result.metadata)
+```
+
 ## How to run?
 1. Locally for testing
     - `xgc model.xg --target=H100 --out build/engine.xge`

@@ -1,0 +1,12 @@
+TARGET_GPU = GB200
+NUM_GPU = 8
+
+def matmul_block(Tensor[float32, M, K] A, Tensor[float32, K, N] B) -> Tensor[float32, M, N] {
+    with shard(A, dim=0), shard(B, dim=1) {
+        return A @ B
+    }
+}
+
+def main() -> Tensor[float32, 2, 2] {
+    return matmul_block(A, B)
+}
