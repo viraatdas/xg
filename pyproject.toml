@@ -1,0 +1,91 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xg-lang"
+version = "0.1.0"
+description = "XG Language - A high-performance language for GPU cluster computing"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "XG Language Team", email = "contact@xg-lang.org"},
+]
+maintainers = [
+    {name = "XG Language Team", email = "contact@xg-lang.org"},
+]
+keywords = ["gpu", "computing", "distributed", "tensor", "compiler", "language"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Compilers",
+    "Topic :: System :: Distributed Computing",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "torch>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov",
+    "black",
+    "flake8",
+    "mypy",
+]
+cuda = [
+    "torch[cuda]>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/viraatdas/xg"
+Documentation = "https://github.com/viraatdas/xg#readme"
+Repository = "https://github.com/viraatdas/xg"
+"Bug Reports" = "https://github.com/viraatdas/xg/issues"
+
+[project.scripts]
+xgc = "xg.cli:xgc_main"
+xgrun = "xg.cli:xgrun_main"
+
+[tool.setuptools]
+packages = ["xg"]
+
+[tool.setuptools.package-data]
+xg = ["*.xg", "examples/*.xg"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
